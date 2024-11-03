@@ -1,3 +1,5 @@
+.flatfile/
+
 # Logs
 logs
 *.log

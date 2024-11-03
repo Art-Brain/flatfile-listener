@@ -1,0 +1,29 @@
+{
+  "name": "flatfile-listener",
+  "version": "1.1.0",
+  "description": "Listener for Flatfile extract, validate and transform input data",
+  "engines": {
+    "node": ">=16"
+  },
+  "main": "index.ts",
+  "scripts": {
+    "dev": "flatfile develop index.ts",
+    "deploy": "flatfile deploy index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@flatfile/hooks": "^1.5.0",
+    "@flatfile/listener": "^1.1.0",
+    "@flatfile/plugin-automap": "^0.7.0",
+    "@flatfile/plugin-constraints": "^5.0.0",
+    "@flatfile/plugin-record-hook": "^1.9.0",
+    "@flatfile/plugin-xlsx-extractor": "^3.3.1",
+    "flatfile": "^3.5.10"
+  },
+  "devDependencies": {
+    "@types/node": "^18.16.0",
+    "typescript": "^5.6.3"
+  }
+}
