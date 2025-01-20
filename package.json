@@ -8,7 +8,7 @@
   "main": "index.ts",
   "scripts": {
     "dev": "flatfile develop index.ts",
-    "deploy": "flatfile deploy index.ts"
+    "deploy": "flatfile deploy -s artbrain-importer index.ts"
   },
   "keywords": [],
   "author": "",
