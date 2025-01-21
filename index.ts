@@ -95,11 +95,6 @@ export default function (listener: FlatfileListener) {
 
           // Fetch data from the source sheet
           const sourceRecords = await api.records.get(dataSheetId);
-          console.log(
-            "sourceRecords",
-            sourceRecords.data.records.length,
-            sourceRecords.data.counts
-          );
 
           // Copy data to the new sheet
           if (
@@ -123,7 +118,7 @@ export default function (listener: FlatfileListener) {
         })
       );
     } catch (error) {
-      console.error(`Error copying data: ${error}`);
+      console.error(`Error copying sheet data: ${error}`);
     }
   });
 
@@ -142,8 +137,8 @@ export default function (listener: FlatfileListener) {
 
         if (record.get("code")) {
           const links = record.getLinks("code");
-          const lookupValue = links?.[0]?.["department"];
-          const targetField = "department";
+          const lookupValue = links?.[0]?.["departments"];
+          const targetField = "departments";
           if (lookupValue !== undefined) {
             record.set(targetField, lookupValue);
             record.addInfo(targetField, "From linked file");
@@ -152,8 +147,8 @@ export default function (listener: FlatfileListener) {
 
         if (record.get("code")) {
           const links = record.getLinks("code");
-          const lookupValue = links?.[0]?.["category"];
-          const targetField = "category";
+          const lookupValue = links?.[0]?.["categories"];
+          const targetField = "categories";
           if (lookupValue !== undefined) {
             record.set(targetField, lookupValue);
             record.addInfo(targetField, "From linked file");
@@ -162,8 +157,8 @@ export default function (listener: FlatfileListener) {
 
         if (record.get("code")) {
           const links = record.getLinks("code");
-          const lookupValue = links?.[0]?.["tag"];
-          const targetField = "tag";
+          const lookupValue = links?.[0]?.["optionalTags"];
+          const targetField = "optionalTags";
           if (lookupValue !== undefined) {
             record.set(targetField, lookupValue);
             record.addInfo(targetField, "From linked file");
