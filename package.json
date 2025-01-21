@@ -14,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@flatfile/api": "^1.12.0",
     "@flatfile/hooks": "^1.5.0",
     "@flatfile/listener": "^1.1.0",
     "@flatfile/plugin-automap": "^0.7.0",

@@ -112,6 +112,20 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.17.19.tgz#8cfaf2ff603e9aabb910e9c0558c26cf32744061"
   integrity sha512-lAhycmKnVOuRYNtRtatQR1LPQf2oYCkRGkSFnseDAKPl8lu5SOsK/e1sXe5a0Pc5kHIHe6P2I/ilntNv2xf3cA==
 
+"@flatfile/api@^1.12.0":
+  version "1.12.0"
+  resolved "https://registry.yarnpkg.com/@flatfile/api/-/api-1.12.0.tgz#c19da3a38b21979d309a0d8fd55fe18b5289754e"
+  integrity sha512-i9NjRyzqFNi3K8D/L8GGA1mLk6n1H1DhGbmffgJ9y6g0eKRnoPDzL6yYHcR95/VZNr6yOHqGL2sWhox6fWz25w==
+  dependencies:
+    "@flatfile/cross-env-config" "0.0.4"
+    "@types/pako" "2.0.1"
+    form-data "4.0.0"
+    js-base64 "3.7.2"
+    node-fetch "2.7.0"
+    pako "2.0.1"
+    qs "6.11.2"
+    url-join "4.0.1"
+
 "@flatfile/api@^1.8.9":
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/@flatfile/api/-/api-1.10.0.tgz#23e1ba67127a34c2688217e4229a19b8c2d99f38"
