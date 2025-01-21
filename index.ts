@@ -125,10 +125,20 @@ export default function (listener: FlatfileListener) {
   listener.use(
     bulkRecordHook("*", async (records: FlatfileRecord[], event) => {
       records.map((record) => {
+        if (record.get("AMCustomerNo")) {
+          const links = record.getLinks("AMCustomerNo");
+          const lookupValue = links?.[0]?.["buyerEmail"];
+          const targetField = "buyerEmail";
+          if (lookupValue !== undefined) {
+            record.set(targetField, lookupValue);
+            record.addInfo(targetField, "From linked file");
+          }
+        }
+
         if (record.get("paddleNumber")) {
           const links = record.getLinks("paddleNumber");
-          const lookupValue = links?.[0]?.["email"];
-          const targetField = "bidder";
+          const lookupValue = links?.[0]?.["buyerEmail"];
+          const targetField = "buyerEmail";
           if (lookupValue !== undefined) {
             record.set(targetField, lookupValue);
             record.addInfo(targetField, "From linked file");
