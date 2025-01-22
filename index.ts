@@ -125,55 +125,46 @@ export default function (listener: FlatfileListener) {
   listener.use(
     bulkRecordHook("*", async (records: FlatfileRecord[], event) => {
       records.map((record) => {
-        if (record.get("AMCustomerNo")) {
-          const links = record.getLinks("AMCustomerNo");
-          const lookupValue = links?.[0]?.["buyerEmail"];
-          const targetField = "buyerEmail";
-          if (lookupValue !== undefined) {
-            record.set(targetField, lookupValue);
-            record.addInfo(targetField, "From linked file");
-          }
-        }
+        const fieldsConfig = {
+          AMCustomerNo: [
+            {
+              targetField: "buyerEmail",
+              lookupField: "buyerEmail",
+            },
+          ],
+          paddleNumber: [
+            {
+              targetField: "buyerEmail",
+              lookupField: "buyerEmail",
+            },
+          ],
+          code: [
+            {
+              targetField: "departments",
+              lookupField: "department",
+            },
+            {
+              targetField: "categories",
+              lookupField: "category",
+            },
+            {
+              targetField: "optionalTags",
+              lookupField: "tag",
+            },
+          ],
+        };
 
-        if (record.get("paddleNumber")) {
-          const links = record.getLinks("paddleNumber");
-          const lookupValue = links?.[0]?.["buyerEmail"];
-          const targetField = "buyerEmail";
-          if (lookupValue !== undefined) {
-            record.set(targetField, lookupValue);
-            record.addInfo(targetField, "From linked file");
-          }
-        }
-
-        if (record.get("code")) {
-          const links = record.getLinks("code");
-          const lookupValue = links?.[0]?.["departments"];
-          const targetField = "departments";
-          if (lookupValue !== undefined) {
-            record.set(targetField, lookupValue);
-            record.addInfo(targetField, "From linked file");
-          }
-        }
-
-        if (record.get("code")) {
-          const links = record.getLinks("code");
-          const lookupValue = links?.[0]?.["categories"];
-          const targetField = "categories";
-          if (lookupValue !== undefined) {
-            record.set(targetField, lookupValue);
-            record.addInfo(targetField, "From linked file");
-          }
-        }
-
-        if (record.get("code")) {
-          const links = record.getLinks("code");
-          const lookupValue = links?.[0]?.["optionalTags"];
-          const targetField = "optionalTags";
-          if (lookupValue !== undefined) {
-            record.set(targetField, lookupValue);
-            record.addInfo(targetField, "From linked file");
-          }
-        }
+        Object.keys(fieldsConfig).forEach((field) => {
+          if (!record.get(field)) return;
+          const links = record.getLinks(field);
+          fieldsConfig[field].forEach(({ targetField, lookupField }) => {
+            const lookupValue = links?.[0]?.[lookupField];
+            if (lookupValue !== undefined) {
+              record.set(targetField, lookupValue);
+              record.addInfo(targetField, "From linked file");
+            }
+          });
+        });
 
         return record;
       });
