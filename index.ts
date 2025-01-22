@@ -132,12 +132,6 @@ export default function (listener: FlatfileListener) {
               lookupField: "buyerEmail",
             },
           ],
-          paddleNumber: [
-            {
-              targetField: "buyerEmail",
-              lookupField: "buyerEmail",
-            },
-          ],
           code: [
             {
               targetField: "departments",
