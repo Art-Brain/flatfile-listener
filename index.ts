@@ -125,43 +125,59 @@ export default function (listener: FlatfileListener) {
   listener.use(
     bulkRecordHook("*", async (records: FlatfileRecord[], event) => {
       records.map((record) => {
-        const fieldsConfig = {
-          AMCustomerNo: [
-            {
-              targetField: "buyerEmail",
-              lookupField: "buyerEmail",
-            },
-          ],
-          code: [
-            {
-              targetField: "departments",
-              lookupField: "department",
-            },
-            {
-              targetField: "categories",
-              lookupField: "category",
-            },
-            {
-              targetField: "optionalTags",
-              lookupField: "tag",
-            },
-          ],
-        };
-
-        Object.keys(fieldsConfig).forEach((field) => {
-          if (!record.get(field)) return;
-          const links = record.getLinks(field);
-          fieldsConfig[field].forEach(({ targetField, lookupField }) => {
-            const lookupValue = links?.[0]?.[lookupField];
-            if (lookupValue !== undefined) {
-              record.set(targetField, lookupValue);
-              record.addInfo(targetField, "From linked file");
-            }
-          });
-        });
-
+        setReferenceFields(record);
+        clearInvalidCodeField(record);
         return record;
       });
     })
   );
+}
+
+function setReferenceFields(record: FlatfileRecord) {
+  const fieldsConfig = {
+    AMCustomerNo: [
+      {
+        targetField: "buyerEmail",
+        lookupField: "buyerEmail",
+      },
+    ],
+    code: [
+      {
+        targetField: "departments",
+        lookupField: "department",
+      },
+      {
+        targetField: "categories",
+        lookupField: "category",
+      },
+      {
+        targetField: "optionalTags",
+        lookupField: "tag",
+      },
+    ],
+  };
+
+  Object.keys(fieldsConfig).forEach((field) => {
+    if (!record.get(field)) return;
+    const links = record.getLinks(field);
+    fieldsConfig[field].forEach(({ targetField, lookupField }) => {
+      const lookupValue = links?.[0]?.[lookupField];
+      if (lookupValue !== undefined) {
+        record.set(targetField, lookupValue);
+        record.addInfo(targetField, "From linked file");
+      }
+    });
+  });
+}
+
+function clearInvalidCodeField(record: FlatfileRecord) {
+  const isDepartmentsValid = !!record.getLinks("departments");
+  const code = record.get("code");
+  const codeLinks = record.getLinks("code");
+  const isCodeInvalid = code && !codeLinks;
+
+  if (isDepartmentsValid && isCodeInvalid) {
+    record.set("code", "");
+    record.addComment("code", `${code} N/A. auto set to empty string`);
+  }
 }

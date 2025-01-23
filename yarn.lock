@@ -112,10 +112,10 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.17.19.tgz#8cfaf2ff603e9aabb910e9c0558c26cf32744061"
   integrity sha512-lAhycmKnVOuRYNtRtatQR1LPQf2oYCkRGkSFnseDAKPl8lu5SOsK/e1sXe5a0Pc5kHIHe6P2I/ilntNv2xf3cA==
 
-"@flatfile/api@^1.12.0":
-  version "1.12.0"
-  resolved "https://registry.yarnpkg.com/@flatfile/api/-/api-1.12.0.tgz#c19da3a38b21979d309a0d8fd55fe18b5289754e"
-  integrity sha512-i9NjRyzqFNi3K8D/L8GGA1mLk6n1H1DhGbmffgJ9y6g0eKRnoPDzL6yYHcR95/VZNr6yOHqGL2sWhox6fWz25w==
+"@flatfile/api@^1.15.0":
+  version "1.15.0"
+  resolved "https://registry.yarnpkg.com/@flatfile/api/-/api-1.15.0.tgz#c22a81005e28d89a86df57de670e5e42a488e765"
+  integrity sha512-qOIqZYidzXulyTOdtglWVhboC++3uGa8+Ys6+o0XR+l7Jatmd36uJr3cVJ/7xSbq3rHYKNNGBNUA8fSd2Q0eDw==
   dependencies:
     "@flatfile/cross-env-config" "0.0.4"
     "@types/pako" "2.0.1"
@@ -150,10 +150,10 @@
   resolved "https://registry.yarnpkg.com/@flatfile/cross-env-config/-/cross-env-config-0.0.6.tgz#f32b7ba04dbb893eb9cb2445f54a4ab68f2a0c32"
   integrity sha512-/8GpBVxjzTlAmFni08ELQfIrfuwZ+yIsAsTcYOzazbIAMp1ShKNB/1RfaIzRGhOF5OTWbj37mAL/z/tu6+rvpQ==
 
-"@flatfile/hooks@^1.5.0":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@flatfile/hooks/-/hooks-1.5.0.tgz#1caf1bd8ff923572168e48bd8d9775b099e70f88"
-  integrity sha512-Ny8ufcNVwzv6YnxEyqXnL7Iq7XBn953ix+yP0Gcymc4pPGUJ7W4EpWraXJNJVYF0K15Ef5Qo0edCymoyowIqaA==
+"@flatfile/hooks@^1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@flatfile/hooks/-/hooks-1.6.0.tgz#b7c78064f1548e37850bab1c353e49c7efac14de"
+  integrity sha512-VgCnmTQPm1lAV0tHMkt0L1xQU64XBsY9AoOnit8jSQQRuSSMbq0TMcsKAbwmGQ6TZJVLJaqJtOUxFMfFa6TaEg==
 
 "@flatfile/listener-driver-pubsub@^2.0.8":
   version "2.1.0"
@@ -166,10 +166,21 @@
     axios "^1.6.0"
     pubnub "^8.2.0"
 
-"@flatfile/listener@^1.0.4", "@flatfile/listener@^1.0.5", "@flatfile/listener@^1.1.0":
+"@flatfile/listener@^1.0.4", "@flatfile/listener@^1.0.5":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@flatfile/listener/-/listener-1.1.0.tgz#ed320d0b8e64763a5d98c23b0cd2edeaf5c1364c"
   integrity sha512-LEzq0ucXmDy/tCM23dg9MTjtZtd8eGSzHLdaKwzeQWrwjN+XnZE/5wrpU+0vXxfDxTpuKFv8TGA/Bvxh/e+4yg==
+  dependencies:
+    ansi-colors "^4.1.3"
+    cross-fetch "^4.0.0"
+    flat "^5.0.2"
+    pako "^2.1.0"
+    wildcard-match "^5.1.2"
+
+"@flatfile/listener@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@flatfile/listener/-/listener-1.1.1.tgz#c47d70cb05db20693bbaa3aca008b492cb9d1d9f"
+  integrity sha512-74rx0L1scclPcqOPOXSXgTDd/1vU4cmhTuFnWcu/iUNEctVOR9WnP3HveTuDxCJUNMA5lL3SQ9fe7Yhrxw5fRQ==
   dependencies:
     ansi-colors "^4.1.3"
     cross-fetch "^4.0.0"
