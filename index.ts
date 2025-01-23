@@ -177,7 +177,11 @@ function clearInvalidCodeField(record: FlatfileRecord) {
   const isCodeInvalid = code && !codeLinks;
 
   if (isDepartmentsValid && isCodeInvalid) {
-    record.set("code", "");
-    record.addComment("code", `${code} N/A. auto set to empty string`);
+    const comment = `${code} N/A. auto set to empty string`;
+    record
+      .set("code", null)
+      .addComment("code", comment)
+      .addInfo("code", comment)
+      .addWarning("code", comment);
   }
 }
