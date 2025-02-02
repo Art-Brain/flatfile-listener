@@ -13,3 +13,14 @@ export function mapValues<T, U>(
     return result;
   }, {} as Record<string, U>);
 }
+
+export function groupBy<T>(
+  array: T[],
+  iteratee: (item: T) => string | number
+): Record<string, T[]> {
+  return array.reduce((acc, item) => {
+    const key = iteratee(item);
+    (acc[key] ||= []).push(item);
+    return acc;
+  }, {} as Record<string, T[]>);
+}

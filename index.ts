@@ -3,8 +3,18 @@ import { automap } from "@flatfile/plugin-automap";
 import { ExcelExtractor } from "@flatfile/plugin-xlsx-extractor";
 import { externalConstraint } from "@flatfile/plugin-constraints";
 import api from "@flatfile/api";
-import { mapValues } from "./utils";
+import { groupBy, mapValues } from "./utils";
 import { FlatfileRecord, bulkRecordHook } from "@flatfile/plugin-record-hook";
+import {
+  clearInvalidCodeField,
+  setReferenceFields,
+  getReferencedFieldChange,
+  isRecordHasLookupField,
+  isSheetHasReferenceField,
+  getRecordsMap,
+  updateRecords,
+} from "./references";
+import { Sheet } from "@flatfile/api/api";
 
 export default function (listener: FlatfileListener) {
   listener.use(
@@ -61,11 +71,6 @@ export default function (listener: FlatfileListener) {
       }
     )
   );
-
-  listener.on("job:ready", { job: "space:configure" }, async (event) => {
-    // const { spaceId } = event.context;
-    // console.log('job:ready', 'spaceId', spaceId,)
-  });
 
   listener.use(
     ExcelExtractor({ rawNumbers: true, raw: true, skipEmptyLines: true })
@@ -124,64 +129,48 @@ export default function (listener: FlatfileListener) {
 
   listener.use(
     bulkRecordHook("*", async (records: FlatfileRecord[], event) => {
-      records.map((record) => {
+      const workbookId: string | null = event.context.workbookId;
+      const updatedSheetId = event.context.sheetId;
+      const hasLookupField = records.some(isRecordHasLookupField);
+      const sheets: Sheet[] | null =
+        (hasLookupField &&
+          workbookId &&
+          (await api.sheets.list({ workbookId })).data) ||
+        null;
+      const updatedSheet = sheets?.find(({ id }) => id === updatedSheetId);
+      const referencingSheets =
+        updatedSheet?.slug &&
+        sheets?.filter((sheet) =>
+          isSheetHasReferenceField(sheet, updatedSheet?.slug)
+        );
+      const recordMap = referencingSheets?.length
+        ? await getRecordsMap(referencingSheets.map(({ id }) => id))
+        : {};
+
+      records.forEach(async (record) => {
         setReferenceFields(record);
         clearInvalidCodeField(record);
-        return record;
       });
+
+      const referenceFieldChanges =
+        sheets &&
+        records.flatMap((record) =>
+          getReferencedFieldChange(updatedSheetId, sheets, recordMap, record)
+        );
+
+      const sheetToRecords = groupBy(
+        referenceFieldChanges,
+        ({ sheetId }) => sheetId
+      );
+      await Promise.all(
+        Object.keys(sheetToRecords).map(async (sheetId) => {
+          const changedRecords = sheetToRecords[sheetId];
+          if (!changedRecords.length) return;
+          await updateRecords(sheetId, changedRecords);
+        })
+      );
+
+      return records;
     })
   );
-}
-
-function setReferenceFields(record: FlatfileRecord) {
-  const fieldsConfig = {
-    AMCustomerNo: [
-      {
-        targetField: "buyerEmail",
-        lookupField: "buyerEmail",
-      },
-    ],
-    code: [
-      {
-        targetField: "departments",
-        lookupField: "department",
-      },
-      {
-        targetField: "categories",
-        lookupField: "category",
-      },
-      {
-        targetField: "optionalTags",
-        lookupField: "tag",
-      },
-    ],
-  };
-
-  Object.keys(fieldsConfig).forEach((field) => {
-    if (!record.get(field)) return;
-    const links = record.getLinks(field);
-    fieldsConfig[field].forEach(({ targetField, lookupField }) => {
-      const lookupValue = links?.[0]?.[lookupField];
-      if (lookupValue !== undefined) {
-        record.set(targetField, lookupValue);
-        record.addInfo(targetField, "From linked file");
-      }
-    });
-  });
-}
-
-function clearInvalidCodeField(record: FlatfileRecord) {
-  const isDepartmentsValid = !!record.getLinks("departments");
-  const code = record.get("code");
-  const codeLinks = record.getLinks("code");
-  const isCodeInvalid = code && !codeLinks;
-
-  if (isDepartmentsValid && isCodeInvalid) {
-    const comment = `${code} N/A. auto set to empty string`;
-    record
-      .set("code", null)
-      .addComment("code", comment)
-      .addInfo("code", comment)
-      .addWarning("code", comment);
-  }
 }
