@@ -14,14 +14,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@flatfile/api": "^1.15.0",
+    "@flatfile/api": "^1.15.4",
     "@flatfile/hooks": "^1.6.0",
     "@flatfile/listener": "^1.1.1",
-    "@flatfile/plugin-automap": "^0.7.0",
+    "@flatfile/plugin-automap": "^0.8.1",
     "@flatfile/plugin-constraints": "^5.0.0",
-    "@flatfile/plugin-record-hook": "^1.9.0",
+    "@flatfile/plugin-record-hook": "^2.0.1",
     "@flatfile/plugin-xlsx-extractor": "^3.3.1",
-    "flatfile": "^3.5.10"
+    "flatfile": "^3.9.1"
   },
   "devDependencies": {
     "@types/node": "^18.16.0",

@@ -112,10 +112,10 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.17.19.tgz#8cfaf2ff603e9aabb910e9c0558c26cf32744061"
   integrity sha512-lAhycmKnVOuRYNtRtatQR1LPQf2oYCkRGkSFnseDAKPl8lu5SOsK/e1sXe5a0Pc5kHIHe6P2I/ilntNv2xf3cA==
 
-"@flatfile/api@^1.15.0":
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/@flatfile/api/-/api-1.15.0.tgz#c22a81005e28d89a86df57de670e5e42a488e765"
-  integrity sha512-qOIqZYidzXulyTOdtglWVhboC++3uGa8+Ys6+o0XR+l7Jatmd36uJr3cVJ/7xSbq3rHYKNNGBNUA8fSd2Q0eDw==
+"@flatfile/api@^1.15.4":
+  version "1.15.4"
+  resolved "https://registry.yarnpkg.com/@flatfile/api/-/api-1.15.4.tgz#3b1f3bef8af231d4f412f1792e738180d1587811"
+  integrity sha512-qZAYSknr2ylUdX3W+izI1Bw2PDFMbUzJgaDKFuEzZ+YP03u4eQD2aup1uUUS/eqmd57YuB5zRANDzEAN4hbnQg==
   dependencies:
     "@flatfile/cross-env-config" "0.0.4"
     "@types/pako" "2.0.1"
@@ -188,12 +188,12 @@
     pako "^2.1.0"
     wildcard-match "^5.1.2"
 
-"@flatfile/plugin-automap@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@flatfile/plugin-automap/-/plugin-automap-0.7.0.tgz#bdce5e3c577ab8a396a638b997125892a13b2b40"
-  integrity sha512-LhtuCasuzfKdlSk083njiDSMa2Afe0V/Y1tTClBaRWnEI+sZ+PK6W4el8ePdOBX5TTAJh+sZ0oRSmZgR2e2IlQ==
+"@flatfile/plugin-automap@^0.8.1":
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/@flatfile/plugin-automap/-/plugin-automap-0.8.1.tgz#698a29356d47f9b57e1164b7db5f2a71e3ff99ee"
+  integrity sha512-R5+XsqR5Fpl+u3KDtj2PaIQxP2QMY0S2jil9SPKC2KLxUvCX9sewyaTDtmwK5zzEwuGzgiutglnp/oj390XEhQ==
   dependencies:
-    "@flatfile/util-common" "^1.5.0"
+    "@flatfile/util-common" "^1.6.0"
     modern-async "^2.0.4"
 
 "@flatfile/plugin-constraints@^5.0.0":
@@ -201,12 +201,12 @@
   resolved "https://registry.yarnpkg.com/@flatfile/plugin-constraints/-/plugin-constraints-5.0.0.tgz#e5b4e0ce72927c8a1d3f77791b52e759f6b6000f"
   integrity sha512-3wqjiWeTGBJZPPnbnlejb6FhXA8XFdSuKqMpcLJkienj76NoXHaMUX1xMkM18gXYIIIKJeNet3HIghXyXEKTRg==
 
-"@flatfile/plugin-record-hook@^1.9.0":
-  version "1.9.0"
-  resolved "https://registry.yarnpkg.com/@flatfile/plugin-record-hook/-/plugin-record-hook-1.9.0.tgz#6b1cd93b7ba269693ca63a3b1bb1b4370192a062"
-  integrity sha512-ab7fl+N78899Q4XwDJLXrHzDWVWmOqnh/reScGV92iVJe+V9nqF9yu78fhGHWcfoFv01m4RTH+2mHxCCcLok6g==
+"@flatfile/plugin-record-hook@^2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@flatfile/plugin-record-hook/-/plugin-record-hook-2.0.1.tgz#3609fd23fb712c9e06d19c517ee136eaee5e88f3"
+  integrity sha512-wAU1Fko9AxOZ3ZxHr8m4LR6OkJYX3AOApo3B6uCxUATjO4iEGKyrDeY/piJ047W4EWO1gvymbu2lEHoycmVvwQ==
   dependencies:
-    "@flatfile/util-common" "^1.5.0"
+    "@flatfile/util-common" "^1.6.0"
 
 "@flatfile/plugin-xlsx-extractor@^3.3.1":
   version "3.3.1"
@@ -221,6 +221,14 @@
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@flatfile/util-common/-/util-common-1.5.0.tgz#ce792e98fd376338ed64f764ee1a58e79cbd9674"
   integrity sha512-SNFjrXSWralZWuwozyC+78XPIth0Wf/4mhLmV/SHFjj3/cnml/f3NuyOClZR8Re9/QTW3Lekyz3VKXUIrvPnPw==
+  dependencies:
+    "@flatfile/cross-env-config" "^0.0.6"
+    cross-fetch "^4.0.0"
+
+"@flatfile/util-common@^1.6.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@flatfile/util-common/-/util-common-1.7.0.tgz#b64edbf6c9b3c987af9c0ec33388d1da6570f4ab"
+  integrity sha512-yOvJlGmepODcXveaPavq6sTCMgBtOePO70LY6uXc7X4X/KmkutrESSJ/fIgKWWcbprjQegtn2COPOYGZU/1XRA==
   dependencies:
     "@flatfile/cross-env-config" "^0.0.6"
     cross-fetch "^4.0.0"
@@ -960,10 +968,10 @@ flat@^5.0.2:
   resolved "https://registry.yarnpkg.com/flat/-/flat-5.0.2.tgz#8ca6fe332069ffa9d324c327198c598259ceb241"
   integrity sha512-b6suED+5/3rTpUBdG1gupIl8MPFCAMA0QXwmljLhvCUKcUvdE4gWky9zpuGCcXHOsz4J9wPGNWq6OKpmIzz3hQ==
 
-flatfile@^3.5.10:
-  version "3.8.0"
-  resolved "https://registry.yarnpkg.com/flatfile/-/flatfile-3.8.0.tgz#aa05e472f25f9829294fca12bc0d4536aa022478"
-  integrity sha512-7QrCUlIaywKIbMMKDmxKZC3EG8iF/iY45gqrjGfQkgKL56GjK/Zq7ib/sFKc4N1oDZLIai9Jpuhzd14PKmVpGg==
+flatfile@^3.9.1:
+  version "3.9.1"
+  resolved "https://registry.yarnpkg.com/flatfile/-/flatfile-3.9.1.tgz#266e4ca1e1076d76e0f4a30f6af620e46854b064"
+  integrity sha512-NS5dkTWGOBNS89N9xJFNGeqFg/sqtl02Xofk7lB828uOwKMfCbseiOVHq6osln+NyY8+Lg16D7TZ0n+Bb5op9Q==
   dependencies:
     "@flatfile/cross-env-config" "^0.0.6"
     "@flatfile/listener" "^1.0.4"
@@ -987,7 +995,7 @@ flatfile@^3.5.10:
     prompts "^2.4.2"
     rc "^1.2.8"
     read-package-json "^6.0.2"
-    rollup "^2.79.1"
+    rollup "^2.79.2"
     rollup-plugin-inject-process-env "^1.3.1"
     simple-mock "^0.8.0"
     table "^6.8.1"
@@ -1882,7 +1890,7 @@ rollup-plugin-inject-process-env@^1.3.1:
   dependencies:
     magic-string "^0.25.7"
 
-rollup@^2.79.1:
+rollup@^2.79.2:
   version "2.79.2"
   resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.79.2.tgz#f150e4a5db4b121a21a747d762f701e5e9f49090"
   integrity sha512-fS6iqSPZDs3dr/y7Od6y5nha8dW1YnbgtsyotCVvoFGKbERG++CVRFv1meyGDE1SNItQA8BrnCw7ScdAhRJ3XQ==

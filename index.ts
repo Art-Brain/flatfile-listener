@@ -1,77 +1,12 @@
 import type { FlatfileListener } from "@flatfile/listener";
 import { automap } from "@flatfile/plugin-automap";
 import { ExcelExtractor } from "@flatfile/plugin-xlsx-extractor";
-import { externalConstraint } from "@flatfile/plugin-constraints";
 import api from "@flatfile/api";
-import { groupBy, mapValues } from "./utils";
+import { mapValues } from "./utils";
 import { FlatfileRecord, bulkRecordHook } from "@flatfile/plugin-record-hook";
-import {
-  clearInvalidCodeField,
-  setReferenceFields,
-  getReferencedFieldChange,
-  isRecordHasLookupField,
-  isSheetHasReferenceField,
-  getRecordsMap,
-  updateRecords,
-} from "./references";
-import { Sheet } from "@flatfile/api/api";
+import { clearInvalidCodeField, setReferenceFields } from "./references";
 
 export default function (listener: FlatfileListener) {
-  listener.use(
-    externalConstraint(
-      "transformer",
-      (value: any, key: string, { config, record }) => {
-        if (config.allow_nulls && value === null) {
-          return; // Allow null values if specified in config
-        }
-
-        // Get the transformation code from the config
-        const code = config.code;
-
-        // Create a function from the code string
-        const transform = new Function("value", "record", "return " + code);
-
-        try {
-          // Apply the transformation
-          const transformedValue = transform(value, record.toJSON());
-
-          // Set the transformed value
-          record.set(key, transformedValue);
-
-          // Optionally, add info about the transformation
-          record.addInfo(key, "Value has been transformed");
-        } catch (error) {
-          // If there's an error in the transformation, add an error to the record
-          record.addError(key, "Transformation failed: " + error.message);
-        }
-      }
-    )
-  );
-
-  listener.use(
-    externalConstraint(
-      "code",
-      (value: any, key: string, { config, record }) => {
-        if (config.allow_nulls && value === null) {
-          return; // Allow null values if specified in config
-        }
-
-        // Adjust AI generated code to be compatible and run
-        const code = config.code
-          .replaceAll("asString", "String")
-          .replaceAll("asNumber", "Number");
-        const validate = new Function("return " + code)();
-        const res = {
-          err: (message: string) => {
-            record.addError(key, message);
-          },
-        };
-
-        validate(value, record.toJSON(), res);
-      }
-    )
-  );
-
   listener.use(
     ExcelExtractor({ rawNumbers: true, raw: true, skipEmptyLines: true })
   );
@@ -128,49 +63,24 @@ export default function (listener: FlatfileListener) {
   });
 
   listener.use(
-    bulkRecordHook("*", async (records: FlatfileRecord[], event) => {
-      const workbookId: string | null = event.context.workbookId;
-      const updatedSheetId = event.context.sheetId;
-      const hasLookupField = records.some(isRecordHasLookupField);
-      const sheets: Sheet[] | null =
-        (hasLookupField &&
-          workbookId &&
-          (await api.sheets.list({ workbookId })).data) ||
-        null;
-      const updatedSheet = sheets?.find(({ id }) => id === updatedSheetId);
-      const referencingSheets =
-        updatedSheet?.slug &&
-        sheets?.filter((sheet) =>
-          isSheetHasReferenceField(sheet, updatedSheet?.slug)
-        );
-      const recordMap = referencingSheets?.length
-        ? await getRecordsMap(referencingSheets.map(({ id }) => id))
-        : {};
-
-      records.forEach(async (record) => {
-        setReferenceFields(record);
-        clearInvalidCodeField(record);
+    bulkRecordHook("*", async (records: FlatfileRecord[]) => {
+      return await new Promise((res) => {
+        // Add a delay to have time to load other sheets data (for example categories)
+        setTimeout(() => {
+          try {
+            return res(
+              records.map((record) => {
+                setReferenceFields(record);
+                clearInvalidCodeField(record);
+                return record;
+              })
+            );
+          } catch (error) {
+            console.error(`Error at bulkRecordHook: ${error}`);
+          }
+          return res(records);
+        }, 1000);
       });
-
-      const referenceFieldChanges =
-        sheets &&
-        records.flatMap((record) =>
-          getReferencedFieldChange(updatedSheetId, sheets, recordMap, record)
-        );
-
-      const sheetToRecords = groupBy(
-        referenceFieldChanges,
-        ({ sheetId }) => sheetId
-      );
-      await Promise.all(
-        Object.keys(sheetToRecords).map(async (sheetId) => {
-          const changedRecords = sheetToRecords[sheetId];
-          if (!changedRecords.length) return;
-          await updateRecords(sheetId, changedRecords);
-        })
-      );
-
-      return records;
     })
   );
 }
