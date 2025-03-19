@@ -1,6 +1,5 @@
 import type { FlatfileListener } from "@flatfile/listener";
 import { automap } from "@flatfile/plugin-automap";
-import { ExcelExtractor } from "@flatfile/plugin-xlsx-extractor";
 import api from "@flatfile/api";
 import { mapValues } from "./utils";
 import { FlatfileRecord, bulkRecordHook } from "@flatfile/plugin-record-hook";
@@ -8,14 +7,10 @@ import { clearInvalidCodeField, setReferenceFields } from "./references";
 
 export default function (listener: FlatfileListener) {
   listener.use(
-    ExcelExtractor({ rawNumbers: true, raw: true, skipEmptyLines: true })
-  );
-
-  listener.use(
     automap({
       accuracy: "confident",
       defaultTargetSheet: "Import",
-      matchFilename: /^.*\.(csv|xlsx)$/gi,
+      matchFilename: /^.*\.(csv|xlsx|xls)$/gi,
       debug: true,
       onFailure: (err) => console.error("error:", err),
     })
