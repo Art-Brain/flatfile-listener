@@ -5,6 +5,13 @@ import { mapValues } from "./utils";
 import { FlatfileRecord, bulkRecordHook } from "@flatfile/plugin-record-hook";
 import { clearInvalidCodeField, setReferenceFields } from "./references";
 
+function sleepSync(ms: number) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    // Busy-wait
+  }
+}
+
 export default function (listener: FlatfileListener) {
   listener.use(
     automap({
@@ -59,23 +66,19 @@ export default function (listener: FlatfileListener) {
 
   listener.use(
     bulkRecordHook("*", async (records: FlatfileRecord[]) => {
-      return await new Promise((res) => {
-        // Add a delay to have time to load other sheets data (for example categories)
-        setTimeout(() => {
-          try {
-            return res(
-              records.map((record) => {
-                setReferenceFields(record);
-                clearInvalidCodeField(record);
-                return record;
-              })
-            );
-          } catch (error) {
-            console.error(`Error at bulkRecordHook: ${error}`);
-          }
-          return res(records);
-        }, 1000);
-      });
+      try {
+        // Add a delay to have time to load sheets data (for example categories)
+        const delay = Math.min(Math.max(1000, records.length), 5000);
+        await new Promise((res) => setTimeout(() => res(null), delay));
+        return records.map((record) => {
+          setReferenceFields(record);
+          clearInvalidCodeField(record);
+          return record;
+        });
+      } catch (error) {
+        console.error(`Error at bulkRecordHook: ${error}`);
+      }
+      return records;
     })
   );
 }

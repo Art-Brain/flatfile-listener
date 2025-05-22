@@ -27,5 +27,8 @@ export function clearInvalidCodeField(record: FlatfileRecord) {
       .addComment("code", comment)
       .addInfo("code", comment)
       .addWarning("code", comment);
+    record.setMetadata({ disableTransformer: true });
+  } else if (!isDepartmentsValid && code) {
+    record.setMetadata({ disableTransformer: false });
   }
 }
