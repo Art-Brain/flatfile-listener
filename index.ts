@@ -5,7 +5,17 @@ import { mapValues } from "./utils";
 import { FlatfileRecord, bulkRecordHook } from "@flatfile/plugin-record-hook";
 import { clearInvalidCodeField, setReferenceFields } from "./references";
 
+function sleepSync(ms: number) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    // Busy-wait
+  }
+}
+
 export default function (listener: FlatfileListener) {
+  // Shared promise to prevent "Thundering Herd" API polling in the same container
+  let readyPromise: Promise<void> | null = null;
+
   listener.use(
     automap({
       accuracy: "confident",
@@ -16,6 +26,7 @@ export default function (listener: FlatfileListener) {
     }),
   );
 
+  // 1. Handle Workbook Creation & Data Sync
   listener.on("workbook:created", async (event) => {
     const workbookId = event.context.workbookId;
     try {
@@ -23,11 +34,21 @@ export default function (listener: FlatfileListener) {
       const copyDataSheets = sheets.filter(
         ({ config: { metadata } }) => metadata?.dataSheetId,
       );
+
+      // Track sheet IDs that need to finish committing before we are "Ready"
+      const pendingSheetIds = copyDataSheets.map((s) => s.id);
+
+      // Initialize metadata with the pending list
+      await api.workbooks.update(workbookId, {
+        metadata: {
+          referenceDataReady: pendingSheetIds.length === 0,
+          pendingReferenceSheets: pendingSheetIds,
+        },
+      });
+
       await Promise.all(
         copyDataSheets.map(async ({ id: newSheetId, config: { metadata } }) => {
-          // Fetch data from the source sheet
           const sourceRecords = await api.records.get(metadata.dataSheetId);
-          // Copy data to the new sheet
           if (sourceRecords?.data?.records?.length) {
             const records = sourceRecords.data.records.map(({ values }) =>
               mapValues(values, ({ value, messages, valid }) => ({
@@ -36,48 +57,62 @@ export default function (listener: FlatfileListener) {
                 valid,
               })),
             );
+            // This insert triggers the commit that commit:completed will catch
             await api.records.insert(newSheetId, records);
+          } else {
+            // If no records, manually remove it from pending via a metadata update
+            const { data: currentWorkbook } =
+              await api.workbooks.get(workbookId);
+            const remaining = (
+              currentWorkbook.metadata?.pendingReferenceSheets || []
+            ).filter((id: string) => id !== newSheetId);
+            await api.workbooks.update(workbookId, {
+              metadata: {
+                ...currentWorkbook.metadata,
+                pendingReferenceSheets: remaining,
+                referenceDataReady: remaining.length === 0,
+              },
+            });
           }
         }),
       );
-      // Persist readiness so any container can see it
-      const { data: currentWorkbook } = await api.workbooks.get(workbookId);
-      await api.workbooks.update(workbookId, {
-        metadata: {
-          ...currentWorkbook.metadata,
-          referenceDataReady: true,
-        },
-      });
     } catch (err) {
       console.error("Reference copy failed:", err);
     }
   });
 
-  // Local cache to avoid API calls once we know it's ready
-  let localReferenceReady = false;
+  // 2. Monitor Commits to toggle readiness
+  listener.on("commit:completed", async (event) => {
+    const { workbookId, sheetId } = event.context;
+    try {
+      const { data: workbook } = await api.workbooks.get(workbookId);
+
+      if (workbook.metadata?.referenceDataReady) return;
+
+      const pending: string[] = workbook.metadata?.pendingReferenceSheets ?? [];
+      if (!pending.includes(sheetId)) return;
+
+      const remaining = pending.filter((id) => id !== sheetId);
+
+      await api.workbooks.update(workbookId, {
+        metadata: {
+          ...workbook.metadata,
+          pendingReferenceSheets: remaining,
+          referenceDataReady: remaining.length === 0,
+        },
+      });
+      console.log(`Sheet ${sheetId} committed. Remaining: ${remaining.length}`);
+    } catch (err) {
+      console.error("Error in commit:completed:", err);
+    }
+  });
 
   listener.use(
-    bulkRecordHook("*", async (records: FlatfileRecord[], event) => {
+    bulkRecordHook("*", async (records: FlatfileRecord[]) => {
       try {
-        const { workbookId } = event.context;
-
-        // 1. Check local cache first (Fastest)
-        if (!localReferenceReady) {
-          const start = Date.now();
-
-          while (Date.now() - start < 30_000) {
-            const { data: workbook } = await api.workbooks.get(workbookId);
-
-            if (workbook.metadata?.referenceDataReady) {
-              localReferenceReady = true; // Set local cache
-              break;
-            }
-            // Increase delay slightly to be gentler on the API
-            await new Promise((r) => setTimeout(r, 1000));
-          }
-        }
-
-        // 2. Proceed with logic
+        // Add a delay to have time to load sheets data (for example categories)
+        const delay = Math.min(Math.max(1000, records.length), 5000);
+        await new Promise((res) => setTimeout(() => res(null), delay));
         return records.map((record) => {
           setReferenceFields(record);
           clearInvalidCodeField(record);
@@ -85,8 +120,8 @@ export default function (listener: FlatfileListener) {
         });
       } catch (error) {
         console.error(`Error at bulkRecordHook: ${error}`);
-        return records;
       }
+      return records;
     }),
   );
 }
