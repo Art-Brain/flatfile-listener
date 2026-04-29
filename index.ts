@@ -5,13 +5,6 @@ import { mapValues } from "./utils";
 import { FlatfileRecord, bulkRecordHook } from "@flatfile/plugin-record-hook";
 import { clearInvalidCodeField, setReferenceFields } from "./references";
 
-function sleepSync(ms: number) {
-  const end = Date.now() + ms;
-  while (Date.now() < end) {
-    // Busy-wait
-  }
-}
-
 export default function (listener: FlatfileListener) {
   // Shared promise to prevent "Thundering Herd" API polling in the same container
   let readyPromise: Promise<void> | null = null;
@@ -107,21 +100,42 @@ export default function (listener: FlatfileListener) {
     }
   });
 
+  // 3. Record Hook with Singleton Polling
   listener.use(
-    bulkRecordHook("*", async (records: FlatfileRecord[]) => {
-      try {
-        // Add a delay to have time to load sheets data (for example categories)
-        const delay = Math.min(Math.max(1000, records.length), 5000);
-        await new Promise((res) => setTimeout(() => res(null), delay));
-        return records.map((record) => {
-          setReferenceFields(record);
-          clearInvalidCodeField(record);
-          return record;
-        });
-      } catch (error) {
-        console.error(`Error at bulkRecordHook: ${error}`);
-      }
-      return records;
-    }),
+    bulkRecordHook(
+      "*",
+      async (records: FlatfileRecord[], event) => {
+        try {
+          const { workbookId } = event.context;
+
+          // Ensure only ONE poll loop runs per container instance
+          if (!readyPromise) {
+            readyPromise = (async () => {
+              const start = Date.now();
+              while (Date.now() - start < 15_000) {
+                // 15s timeout for safety
+                const { data: wb } = await api.workbooks.get(workbookId);
+                if (wb.metadata?.referenceDataReady) return;
+                await new Promise((r) => setTimeout(r, 1000));
+              }
+              console.warn("Reference data polling timed out after 15s");
+            })();
+          }
+
+          // All batches wait here for the same promise to resolve
+          await readyPromise;
+
+          return records.map((record) => {
+            setReferenceFields(record);
+            clearInvalidCodeField(record);
+            return record;
+          });
+        } catch (error) {
+          console.error(`Error at bulkRecordHook: ${error}`);
+          return records; // Always return records to avoid UI hang
+        }
+      },
+      { debug: true },
+    ),
   );
 }
