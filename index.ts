@@ -3,82 +3,94 @@ import { automap } from "@flatfile/plugin-automap";
 import api from "@flatfile/api";
 import { mapValues } from "./utils";
 import { FlatfileRecord, bulkRecordHook } from "@flatfile/plugin-record-hook";
-import { clearInvalidCodeField, setReferenceFields } from "./references";
-
-function sleepSync(ms: number) {
-  const end = Date.now() + ms;
-  while (Date.now() < end) {
-    // Busy-wait
-  }
-}
+import {
+  clearInvalidCodeFieldSafe,
+  getLookupData,
+  getLookupDataFromWorkbookMetadata,
+  saveLookupDataOnWorkbookMetadata,
+  setReferenceFieldsFromCache,
+} from "./references";
 
 export default function (listener: FlatfileListener) {
   listener.use(
     automap({
-      accuracy: "confident",
+      accuracy: "exact",
       defaultTargetSheet: "Import",
       matchFilename: /^.*\.(csv|xlsx|xls)$/gi,
       debug: true,
-      onFailure: (err) => console.error("error:", err),
-    })
+      onFailure: async (event) => {
+        console.error("error: oh!", event);
+        const { spaceId, fileId } = event.context;
+        await api.documents.create(spaceId, {
+          title: "Action Required: Manual Mapping Needed",
+          body:
+            "# Upload could not be auto-mapped\n\n" +
+            `Your file (\`${fileId}\`) didn't match the expected schema exactly. ` +
+            "Please contact support or re-upload using the original template.",
+          treatments: ["ephemeral"], // full-screen takeover for focus
+        });
+      },
+    }),
   );
 
+  // Still copy data into the categories sheet so the UI/links work for the user
   listener.on("workbook:created", async (event) => {
+    const workbookId = event.context.workbookId;
     try {
-      const workbookId = event?.context?.workbookId;
-      const sheets = (await api.sheets.list({ workbookId })).data;
+      const { data: sheets } = await api.sheets.list({ workbookId });
       const copyDataSheets = sheets.filter(
-        ({ config: { metadata } }) => metadata?.dataSheetId
+        ({ config: { metadata } }) => metadata?.dataSheetId,
       );
       await Promise.all(
         copyDataSheets.map(async ({ id: newSheetId, config: { metadata } }) => {
-          const dataSheetId = metadata.dataSheetId;
-          console.log("copying data from", dataSheetId, "to", newSheetId);
-
-          // Fetch data from the source sheet
-          const sourceRecords = await api.records.get(dataSheetId);
-
-          // Copy data to the new sheet
-          if (
-            sourceRecords?.data?.records &&
-            sourceRecords.data.records.length > 0
-          ) {
+          const sourceRecords = await api.records.get(metadata.dataSheetId);
+          if (sourceRecords?.data?.records?.length) {
             const records = sourceRecords.data.records.map(({ values }) =>
               mapValues(values, ({ value, messages, valid }) => ({
                 value,
                 messages,
                 valid,
-              }))
+              })),
             );
             await api.records.insert(newSheetId, records);
-            console.log(
-              `Data copied from sheet ${dataSheetId} to sheet ${newSheetId}`
-            );
-          } else {
-            console.error(`No data found in source sheet ${dataSheetId}`);
           }
-        })
+        }),
       );
-    } catch (error) {
-      console.error(`Error copying sheet data: ${error}`);
+      const lookupData = await getLookupData(workbookId);
+      await saveLookupDataOnWorkbookMetadata(workbookId, lookupData);
+    } catch (err) {
+      console.error("Reference copy failed:", err);
     }
   });
 
   listener.use(
-    bulkRecordHook("*", async (records: FlatfileRecord[]) => {
-      try {
-        // Add a delay to have time to load sheets data (for example categories)
-        const delay = Math.min(Math.max(1000, records.length), 5000);
-        await new Promise((res) => setTimeout(() => res(null), delay));
-        return records.map((record) => {
-          setReferenceFields(record);
-          clearInvalidCodeField(record);
-          return record;
-        });
-      } catch (error) {
-        console.error(`Error at bulkRecordHook: ${error}`);
-      }
-      return records;
-    })
+    bulkRecordHook(
+      "*",
+      async (records: FlatfileRecord[], event) => {
+        try {
+          const { workbookId } = event.context;
+          let anyChanges = false;
+          const cache =
+            (await getLookupDataFromWorkbookMetadata(workbookId)) ??
+            (await getLookupData(workbookId));
+
+          const newRecords = records.map((record) => {
+            const recordChanged = setReferenceFieldsFromCache(record, cache);
+            const recordChanged2 = clearInvalidCodeFieldSafe(record, cache);
+            anyChanges = anyChanges || recordChanged || recordChanged2;
+            return record;
+          });
+          console.log("anyChanges", anyChanges);
+          if (anyChanges) {
+            return newRecords;
+          }
+          // return newRecords;
+        } catch (error) {
+          console.error(`Error at bulkRecordHook: ${error}`);
+          throw error;
+        }
+      },
+      { debug: true },
+    ),
   );
 }
