@@ -1,37 +1,36 @@
 import type { FlatfileListener } from "@flatfile/listener";
 import { automap } from "@flatfile/plugin-automap";
 import api from "@flatfile/api";
-import { mapValues } from "./utils";
+import { mapValues } from "./utils/object";
 import { FlatfileRecord, bulkRecordHook } from "@flatfile/plugin-record-hook";
 import {
-  clearInvalidCodeFieldSafe,
   getLookupData,
-  getLookupDataFromWorkbookMetadata,
+  getLookupDataByWorkbook,
   saveLookupDataOnWorkbookMetadata,
-  setReferenceFieldsFromCache,
-} from "./references";
+} from "./lookup/cache";
+import { xlsxExtractorPlugin } from "@flatfile/plugin-xlsx-extractor";
+import {
+  AM_REGISTRATIONS_SHEET_NAME,
+  CATEGORIES_SHEET_NAME,
+  LOOKUP_FIELDS,
+} from "./config/lookups";
+import { runDynamicHooks } from "./hooks/dynamic";
+import { referenceLookupHook } from "./hooks/reference-lookup";
 
 export default function (listener: FlatfileListener) {
+  listener.use(xlsxExtractorPlugin());
   listener.use(
     automap({
-      accuracy: "exact",
+      accuracy: "confident",
       defaultTargetSheet: "Import",
       matchFilename: /^.*\.(csv|xlsx|xls)$/gi,
       debug: true,
       onFailure: async (event) => {
         console.error("error: oh!", event);
-        const { spaceId, fileId } = event.context;
-        await api.documents.create(spaceId, {
-          title: "Action Required: Manual Mapping Needed",
-          body:
-            "# Upload could not be auto-mapped\n\n" +
-            `Your file (\`${fileId}\`) didn't match the expected schema exactly. ` +
-            "Please contact support or re-upload using the original template.",
-          treatments: ["ephemeral"], // full-screen takeover for focus
-        });
       },
     }),
   );
+  listener.use(runDynamicHooks);
 
   // Still copy data into the categories sheet so the UI/links work for the user
   listener.on("workbook:created", async (event) => {
@@ -56,41 +55,42 @@ export default function (listener: FlatfileListener) {
           }
         }),
       );
-      const lookupData = await getLookupData(workbookId);
+      const lookupData = await getLookupDataByWorkbook(workbookId);
       await saveLookupDataOnWorkbookMetadata(workbookId, lookupData);
     } catch (err) {
       console.error("Reference copy failed:", err);
     }
   });
 
+  // amregistrations sheet to refresh lookup cache
   listener.use(
     bulkRecordHook(
-      "*",
+      AM_REGISTRATIONS_SHEET_NAME,
       async (records: FlatfileRecord[], event) => {
         try {
-          const { workbookId } = event.context;
-          let anyChanges = false;
-          const cache =
-            (await getLookupDataFromWorkbookMetadata(workbookId)) ??
-            (await getLookupData(workbookId));
+          const { workbookId, sheetId } = event.context;
+          // Refresh the global lookup data whenever registrations are uploaded/updated
+          const lookupData = await getLookupData(workbookId, [sheetId], true);
 
-          const newRecords = records.map((record) => {
-            const recordChanged = setReferenceFieldsFromCache(record, cache);
-            const recordChanged2 = clearInvalidCodeFieldSafe(record, cache);
-            anyChanges = anyChanges || recordChanged || recordChanged2;
-            return record;
-          });
-          console.log("anyChanges", anyChanges);
-          if (anyChanges) {
-            return newRecords;
-          }
-          // return newRecords;
+          await saveLookupDataOnWorkbookMetadata(workbookId, lookupData);
         } catch (error) {
-          console.error(`Error at bulkRecordHook: ${error}`);
-          throw error;
+          console.error(
+            `Error updating lookup data from amregistrations: ${error}`,
+          );
         }
+        return records;
       },
-      { debug: true },
     ),
   );
+
+  Object.keys(LOOKUP_FIELDS).forEach((sheetSlug) => {
+    listener.use(
+      bulkRecordHook(sheetSlug.toLowerCase(), referenceLookupHook, {
+        debug: true,
+      }),
+    );
+  });
+
+  // Make sure categories sheet is always processed and the submit button is enabled
+  listener.use(bulkRecordHook(CATEGORIES_SHEET_NAME, (records) => records));
 }
