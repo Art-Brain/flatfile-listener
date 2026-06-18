@@ -1,4 +1,5 @@
 export const AM_REGISTRATIONS_SHEET_NAME = "amregistrations";
+export const WB_REGISTRATIONS_SHEET_NAME = "wbregistrations";
 export const CATEGORIES_SHEET_NAME = "categories";
 
 export const LOOKUP_FIELDS: Record<
@@ -10,6 +11,15 @@ export const LOOKUP_FIELDS: Record<
 > = {
   AMCustomerNo: {
     refSheetName: AM_REGISTRATIONS_SHEET_NAME,
+    fields: [
+      {
+        targetField: "buyerEmail",
+        lookupField: "buyerEmail",
+      },
+    ],
+  },
+  WBCustomerNo: {
+    refSheetName: WB_REGISTRATIONS_SHEET_NAME,
     fields: [
       {
         targetField: "buyerEmail",

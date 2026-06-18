@@ -13,6 +13,7 @@ import {
   AM_REGISTRATIONS_SHEET_NAME,
   CATEGORIES_SHEET_NAME,
   LOOKUP_FIELDS,
+  WB_REGISTRATIONS_SHEET_NAME,
 } from "./config/lookups";
 import { runDynamicHooks } from "./hooks/dynamic";
 import { referenceLookupHook } from "./hooks/reference-lookup";
@@ -62,25 +63,32 @@ export default function (listener: FlatfileListener) {
     }
   });
 
-  // amregistrations sheet to refresh lookup cache
-  listener.use(
-    bulkRecordHook(
-      AM_REGISTRATIONS_SHEET_NAME,
-      async (records: FlatfileRecord[], event) => {
-        try {
-          const { workbookId, sheetId } = event.context;
-          // Refresh the global lookup data whenever registrations are uploaded/updated
-          const lookupData = await getLookupData(workbookId, [sheetId], true);
+  // registration sheets refresh lookup cache when uploaded/updated
+  [AM_REGISTRATIONS_SHEET_NAME, WB_REGISTRATIONS_SHEET_NAME].forEach(
+    (registrationSheetName) => {
+      listener.use(
+        bulkRecordHook(
+          registrationSheetName,
+          async (records: FlatfileRecord[], event) => {
+            try {
+              const { workbookId, sheetId } = event.context;
+              const lookupData = await getLookupData(
+                workbookId,
+                [sheetId],
+                true,
+              );
 
-          await saveLookupDataOnWorkbookMetadata(workbookId, lookupData);
-        } catch (error) {
-          console.error(
-            `Error updating lookup data from amregistrations: ${error}`,
-          );
-        }
-        return records;
-      },
-    ),
+              await saveLookupDataOnWorkbookMetadata(workbookId, lookupData);
+            } catch (error) {
+              console.error(
+                `Error updating lookup data from ${registrationSheetName}: ${error}`,
+              );
+            }
+            return records;
+          },
+        ),
+      );
+    },
   );
 
   Object.keys(LOOKUP_FIELDS).forEach((sheetSlug) => {
