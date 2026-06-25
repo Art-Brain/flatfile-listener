@@ -9,12 +9,7 @@ import {
   saveLookupDataOnWorkbookMetadata,
 } from "./lookup/cache";
 import { xlsxExtractorPlugin } from "@flatfile/plugin-xlsx-extractor";
-import {
-  AM_REGISTRATIONS_SHEET_NAME,
-  CATEGORIES_SHEET_NAME,
-  LOOKUP_FIELDS,
-  WB_REGISTRATIONS_SHEET_NAME,
-} from "./config/lookups";
+import { CATEGORIES_SHEET_NAME, LOOKUP_FIELDS } from "./config/lookups";
 import { runDynamicHooks } from "./hooks/dynamic";
 import { referenceLookupHook } from "./hooks/reference-lookup";
 
@@ -64,33 +59,26 @@ export default function (listener: FlatfileListener) {
   });
 
   // registration sheets refresh lookup cache when uploaded/updated
-  [AM_REGISTRATIONS_SHEET_NAME, WB_REGISTRATIONS_SHEET_NAME].forEach(
-    (registrationSheetName) => {
-      listener.use(
-        bulkRecordHook(
-          registrationSheetName,
-          async (records: FlatfileRecord[], event) => {
-            try {
-              const { workbookId, sheetId } = event.context;
-              const lookupData = await getLookupData(
-                workbookId,
-                [sheetId],
-                true,
-              );
+  Object.values(LOOKUP_FIELDS).forEach(({ refSheetName }) => {
+    if (!refSheetName) return;
+    listener.use(
+      bulkRecordHook(refSheetName, async (records: FlatfileRecord[], event) => {
+        try {
+          const { workbookId, sheetId } = event.context;
+          const lookupData = await getLookupData(workbookId, [sheetId], true);
 
-              await saveLookupDataOnWorkbookMetadata(workbookId, lookupData);
-            } catch (error) {
-              console.error(
-                `Error updating lookup data from ${registrationSheetName}: ${error}`,
-              );
-            }
-            return records;
-          },
-        ),
-      );
-    },
-  );
+          await saveLookupDataOnWorkbookMetadata(workbookId, lookupData);
+        } catch (error) {
+          console.error(
+            `Error updating lookup data from ${refSheetName}: ${error}`,
+          );
+        }
+        return records;
+      }),
+    );
+  });
 
+  // reference lookup hooks
   Object.keys(LOOKUP_FIELDS).forEach((sheetSlug) => {
     listener.use(
       bulkRecordHook(sheetSlug.toLowerCase(), referenceLookupHook, {

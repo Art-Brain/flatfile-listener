@@ -1,11 +1,13 @@
 export const AM_REGISTRATIONS_SHEET_NAME = "amregistrations";
 export const WB_REGISTRATIONS_SHEET_NAME = "wbregistrations";
+export const IMAGE_LINKS_SHEET_NAME = "imagelinks";
+export const UNDERBIDS_LOTS_SHEET_NAME = "underbidslots";
 export const CATEGORIES_SHEET_NAME = "categories";
 
 export const LOOKUP_FIELDS: Record<
   string,
   {
-    refSheetName: string;
+    refSheetName: string | null;
     fields: { targetField: string; lookupField: string }[];
   }
 > = {
@@ -28,7 +30,7 @@ export const LOOKUP_FIELDS: Record<
     ],
   },
   code: {
-    refSheetName: CATEGORIES_SHEET_NAME,
+    refSheetName: null,
     fields: [
       {
         targetField: "departments",
@@ -41,6 +43,32 @@ export const LOOKUP_FIELDS: Record<
       {
         targetField: "optionalTags",
         lookupField: "tag",
+      },
+    ],
+  },
+  "lotNo.": {
+    refSheetName: IMAGE_LINKS_SHEET_NAME,
+    fields: [
+      {
+        targetField: "lotNo.",
+        lookupField: "lotNo.",
+      },
+      {
+        targetField: "primaryItemUrl",
+        lookupField: "primaryItemUrl",
+      },
+      {
+        targetField: "imageUrl",
+        lookupField: "imageUrl",
+      },
+    ],
+  },
+  itemnoid: {
+    refSheetName: UNDERBIDS_LOTS_SHEET_NAME,
+    fields: [
+      {
+        targetField: "lotno",
+        lookupField: "lotno",
       },
     ],
   },
