@@ -2,6 +2,7 @@ import FlatfileListener from "@flatfile/listener";
 import { externalConstraint } from "@flatfile/plugin-constraints";
 import { asDate, asNumber, asString } from "../utils/casting";
 import { Flatfile } from "@flatfile/api";
+import { registerYupRuntimeConstraint } from "./yup-runtime";
 
 export function runDynamicHooks(listener: FlatfileListener) {
   listener.use(
@@ -72,4 +73,6 @@ export function runDynamicHooks(listener: FlatfileListener) {
       }
     }),
   );
+
+  registerYupRuntimeConstraint(listener);
 }
