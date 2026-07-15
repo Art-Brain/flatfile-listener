@@ -3,6 +3,12 @@ export const WB_REGISTRATIONS_SHEET_NAME = "wbregistrations";
 export const IMAGE_LINKS_SHEET_NAME = "imagelinks";
 export const UNDERBIDS_LOTS_SHEET_NAME = "underbidslots";
 export const CATEGORIES_SHEET_NAME = "categories";
+export const REF_SHEETS = [
+  AM_REGISTRATIONS_SHEET_NAME,
+  WB_REGISTRATIONS_SHEET_NAME,
+  IMAGE_LINKS_SHEET_NAME,
+  UNDERBIDS_LOTS_SHEET_NAME,
+];
 
 export const LOOKUP_FIELDS: Record<
   string,

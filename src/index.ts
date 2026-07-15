@@ -12,6 +12,7 @@ import { xlsxExtractorPlugin } from "@flatfile/plugin-xlsx-extractor";
 import { CATEGORIES_SHEET_NAME, LOOKUP_FIELDS } from "./config/lookups";
 import { runDynamicHooks } from "./hooks/dynamic";
 import { referenceLookupHook } from "./hooks/reference-lookup";
+import { submitSlackNotification } from "./hooks/slack-submit-notification";
 
 export default function (listener: FlatfileListener) {
   listener.use(xlsxExtractorPlugin());
@@ -27,6 +28,7 @@ export default function (listener: FlatfileListener) {
     }),
   );
   listener.use(runDynamicHooks);
+  listener.use(submitSlackNotification);
 
   // Still copy data into the categories sheet so the UI/links work for the user
   listener.on("workbook:created", async (event) => {
