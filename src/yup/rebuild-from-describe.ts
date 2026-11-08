@@ -42,6 +42,7 @@ const MATCHES_MESSAGES_BY_FIELD: Record<string, string> = {
   entrytime: "Must be a valid date (ISO 8601 or DD/MM/YYYY)",
   joinedat: "Must be a valid date (ISO 8601 or DD/MM/YYYY)",
   imageurl: "Must be a valid URL",
+  primaryitemurl: "Must be a valid URL",
 };
 
 /** Same normalization as Artbrain removeAstrixAndMoveToLowerCase. */
