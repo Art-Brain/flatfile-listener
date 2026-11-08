@@ -55,6 +55,29 @@ export function normalizeImportFieldKey(key: string): string {
     .toLowerCase();
 }
 
+/**
+ * Find a field description saved under the raw column key or its normalized form.
+ * New Artbrain snapshots key fields by normalizeImportFieldKey. Older snapshots
+ * keep the original Flatfile key (for example "Lot No." or "PrimaryItemURL").
+ */
+export function findFieldSchemaDescription(
+  fields: Record<string, FieldSchemaDescription>,
+  key: string,
+): FieldSchemaDescription | undefined {
+  const exact = fields[key];
+  if (exact) return exact;
+
+  const normalized = normalizeImportFieldKey(key);
+  const normalizedHit = fields[normalized];
+  if (normalizedHit) return normalizedHit;
+
+  // Backwards compatibility for older snapshots. (legacy keys)
+  for (const [storedKey, description] of Object.entries(fields)) {
+    if (normalizeImportFieldKey(storedKey) === normalized) return description;
+  }
+  return undefined;
+}
+
 function matchesMessageForField(fieldKey?: string): string | undefined {
   if (!fieldKey) return undefined;
   return MATCHES_MESSAGES_BY_FIELD[normalizeImportFieldKey(fieldKey)];

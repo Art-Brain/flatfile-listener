@@ -4,9 +4,9 @@ import api, { Flatfile } from "@flatfile/api";
 import * as Yup from "yup";
 import {
   coerceValueForField,
+  findFieldSchemaDescription,
   formatYupValidationError,
   getCachedFieldValidator,
-  type FieldSchemaDescription,
   type YupSchemaMetadata,
 } from "../yup/rebuild-from-describe";
 
@@ -42,9 +42,10 @@ export function registerYupRuntimeConstraint(listener: FlatfileListener) {
       );
       if (!schemaMetadata?.fields) return;
 
-      const fieldDescription = schemaMetadata.fields[key] as
-        | FieldSchemaDescription
-        | undefined;
+      const fieldDescription = findFieldSchemaDescription(
+        schemaMetadata.fields,
+        key,
+      );
       if (!fieldDescription) return;
 
       try {
